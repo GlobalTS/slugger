@@ -14,6 +14,11 @@ namespace GlobalTS\Slugger;
  */
 class Result
 {
+    public const KEY_ID    = 'id';
+    public const KEY_TITLE = 'title';
+    public const KEY_HASH  = 'hash';
+    public const KEY_DATE  = 'date';
+    
     /**
      * @var int
      */
@@ -56,10 +61,10 @@ class Result
     public static function fromArray(array $data)
     {
         return new static(
-            $data['id'] ?? null,
-            $data['title'] ?? null,
-            $data['hash'] ?? null,
-            $data['date'] ?? null
+            $data[self::KEY_ID] ?? null,
+            $data[self::KEY_TITLE] ?? null,
+            $data[self::KEY_HASH] ?? null,
+            $data[self::KEY_DATE] ?? null
         );
     }
     
@@ -93,5 +98,24 @@ class Result
     public function getDate(): ?string
     {
         return $this->date;
+    }
+    
+    /**
+     * Returns non-empty properties array
+     * @return array
+     */
+    public function getNotEmptyValues()
+    {
+        return array_filter($this->toArray(), function ($item) {
+            return ! empty($item);
+        });
+    }
+    
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return get_object_vars($this);
     }
 }
