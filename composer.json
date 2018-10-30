@@ -1,0 +1,30 @@
+{
+  "name": "globalts/slugger",
+  "description": "slugger",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "type": "library",
+  "require": {
+    "php": ">=7.2.0",
+    "ext-intl": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "GlobalTS\\Slugger\\": "src/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "7.4.*"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "GlobalTS\\Slugger\\Tests\\": "tests/"
+    }
+  },
+  "authors": [
+    {
+      "name": "topot",
+      "email": "topotru@gamail.com"
+    }
+  ]
+}
