@@ -77,6 +77,14 @@ class Slugger
     }
     
     /**
+     * @return TransliteratorInterface
+     */
+    public function getTransliterator()
+    {
+        return $this->transliterator;
+    }
+    
+    /**
      * @param EntityInterface $article
      * @return string
      */
