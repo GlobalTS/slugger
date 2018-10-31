@@ -29,7 +29,7 @@ class Slugger
     /**
      * @var array
      */
-    private $keys;
+    private $rules_keys;
     
     /**
      * @var TransliteratorInterface
@@ -54,39 +54,18 @@ class Slugger
     public function __construct(TransliteratorInterface $transliterator, string $rule = null)
     {
         $this->transliterator = $transliterator;
-        $this->keys           = array_keys(self::RULES);
-    
+        $this->rules_keys     = array_keys(self::RULES);
+        
         $this->setRuleIfExists($rule);
     }
     
     /**
-     * @param string $rule
+     * Returns available rules keys
+     * @return array
      */
-    public function setRule(string $rule)
+    public function getRulesKeys(): array
     {
-        $this->rule    = trim($rule, " /");
-        $this->pattern = $this->buildPattern($this->rule);
-    }
-    
-    /**
-     * @return string
-     */
-    public function getRule()
-    {
-        return $this->rule;
-    }
-    
-    /**
-     * @param string $rule
-     * @return string
-     */
-    public function buildPattern(string $rule)
-    {
-        $pattern = quotemeta(addslashes($rule));
-        foreach (self::RULES as $key => $value) {
-            $pattern = str_replace($key, "(?'{$key}'{$value})", $pattern);
-        }
-        return "|^{$pattern}$|";
+        return $this->rules_keys;
     }
     
     /**
@@ -106,6 +85,46 @@ class Slugger
     }
     
     /**
+     * @return string
+     */
+    public function getRule()
+    {
+        return $this->rule;
+    }
+    
+    /**
+     * @return bool
+     */
+    public function hasRule()
+    {
+        return ! empty($this->rule);
+    }
+    
+    /**
+     * @param string $rule
+     * @return Slugger
+     */
+    public function setRule(string $rule)
+    {
+        $this->rule    = trim($rule, " /");
+        $this->pattern = $this->buildPattern($this->rule);
+        return $this;
+    }
+    
+    /**
+     * @param string $rule
+     * @return string
+     */
+    public function buildPattern(string $rule)
+    {
+        $pattern = quotemeta(addslashes($rule));
+        foreach (self::RULES as $key => $value) {
+            $pattern = str_replace($key, "(?'{$key}'{$value})", $pattern);
+        }
+        return "|^{$pattern}$|";
+    }
+    
+    /**
      * @param EntityInterface $entity
      * @param null|string $rule
      * @return string
@@ -113,13 +132,12 @@ class Slugger
      */
     public function generateFromEntity(EntityInterface $entity, ?string $rule = null)
     {
-        $this->setRuleIfExists($rule);
-        
         return $this->generate(
             $entity->getId(),
             $entity->getHash(),
             $entity->getTitle(),
-            $entity->getCreatedAt()->format('Y-m-d')
+            $entity->getCreatedAt()->format('Y-m-d'),
+            $rule
         );
     }
     
@@ -136,10 +154,10 @@ class Slugger
     {
         $this->setRuleIfExists($rule);
     
-        if (empty($this->rule)) {
+        if (! $this->hasRule()) {
             throw new Exception('Rule is empty - you must set rule parameter before processing', Exception::CODE_RULE_EMPTY);
         }
-        $slug = str_replace($this->keys, [
+        $slug = str_replace($this->rules_keys, [
             $id,
             $hash,
             $this->transliterator->slugify($title),
@@ -168,7 +186,7 @@ class Slugger
         if ($res) {
             
             $data = array_filter($matches, function ($key) {
-                return in_array($key, $this->keys, true);
+                return in_array($key, $this->rules_keys, true);
             }, ARRAY_FILTER_USE_KEY);
             
             return Result::fromArray($data);
