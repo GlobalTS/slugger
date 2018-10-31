@@ -106,20 +106,20 @@ class Slugger
     }
     
     /**
-     * @param EntityInterface $article
+     * @param EntityInterface $entity
      * @param null|string $rule
      * @return string
      * @throws Exception
      */
-    public function generateFromEntity(EntityInterface $article, ?string $rule = null)
+    public function generateFromEntity(EntityInterface $entity, ?string $rule = null)
     {
         $this->setRuleIfExists($rule);
         
         return $this->generate(
-            $article->getId(),
-            $article->getHash(),
-            $article->getTitle(),
-            $article->getCreatedAt()->format('Y-m-d')
+            $entity->getId(),
+            $entity->getHash(),
+            $entity->getTitle(),
+            $entity->getCreatedAt()->format('Y-m-d')
         );
     }
     
