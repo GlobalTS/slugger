@@ -27,55 +27,63 @@ class SluggerTest extends TestCase
     private $transliterator;
     
     /**
+     *
+     */
+    protected function setUp()
+    {
+        $this->transliterator = new IntlTransliterator();
+    }
+    
+    /**
      * @return array
      */
     public function getTestData()
     {
         return [
             'test_1' => [
-                'id--title',
-                "|^(?'id'[0-9]+)--(?'title'[a-z0-9_-]+)$|",
-                '318--xiaomi-provela-ipo-po-niznej-granice-privlekla-472-mlrd',
-                318,
-                '',
-                'Xiaomi провела IPO по нижней границе, привлекла $4,72 млрд',
-                '',
+                'rule'    => '/date/hash/title.id.html',
+                'pattern' => "|^(?'date'\d\d\d\d\-\d\d\-\d\d)/(?'hash'[a-fA-F0-9]{40})/(?'title'[a-z0-9_-]+)\.(?'id'[0-9]+)\.html$|",
+                'slug'    => '2018-06-29/fcf91c2c99f829e749bb62cb4ab0aabe5371d573/xiaomi-provela-ipo-po-niznej-granice-privlekla-472-mlrd.318.html',
+                'id'      => 318,
+                'hash'    => 'fcf91c2c99f829e749bb62cb4ab0aabe5371d573',
+                'title'   => 'Xiaomi провела IPO по нижней границе, привлекла $4,72 млрд',
+                'date'    => '2018-06-29',
             ],
             'test_2' => [
-                '/date/hash/title.id.html',
-                "|^(?'date'\d\d\d\d\-\d\d\-\d\d)/(?'hash'[a-fA-F0-9]{40})/(?'title'[a-z0-9_-]+)\.(?'id'[0-9]+)\.html$|",
-                '2018-06-29/fcf91c2c99f829e749bb62cb4ab0aabe5371d573/xiaomi-provela-ipo-po-niznej-granice-privlekla-472-mlrd.318.html',
-                318,
-                'fcf91c2c99f829e749bb62cb4ab0aabe5371d573',
-                'Xiaomi провела IPO по нижней границе, привлекла $4,72 млрд',
-                '2018-06-29',
+                'rule'    => 'id--title',
+                'pattern' => "|^(?'id'[0-9]+)--(?'title'[a-z0-9_-]+)$|",
+                'slug'    => '318--xiaomi-provela-ipo-po-niznej-granice-privlekla-472-mlrd',
+                'id'      => 318,
+                'hash'    => '',
+                'title'   => 'Xiaomi провела IPO по нижней границе, привлекла $4,72 млрд',
+                'date'    => '',
             ],
             'test_3' => [
-                'hash',
-                "|^(?'hash'[a-fA-F0-9]{40})$|",
-                'fcf91c2c99f829e749bb62cb4ab0aabe5371d573',
-                null,
-                'fcf91c2c99f829e749bb62cb4ab0aabe5371d573',
-                '',
-                '',
+                'rule'    => 'hash',
+                'pattern' => "|^(?'hash'[a-fA-F0-9]{40})$|",
+                'slug'    => 'fcf91c2c99f829e749bb62cb4ab0aabe5371d573',
+                'id'      => null,
+                'hash'    => 'fcf91c2c99f829e749bb62cb4ab0aabe5371d573',
+                'title'   => '',
+                'date'    => '',
             ],
             'test_4' => [
-                'id',
-                "|^(?'id'[0-9]+)$|",
-                '318',
-                318,
-                '',
-                '',
-                '',
+                'rule'    => 'id',
+                'pattern' => "|^(?'id'[0-9]+)$|",
+                'slug'    => '318',
+                'id'      => 318,
+                'hash'    => '',
+                'title'   => '',
+                'date'    => '',
             ],
             'test_5' => [
-                'hash.id',
-                "|^(?'hash'[a-fA-F0-9]{40})\.(?'id'[0-9]+)$|",
-                'fcf91c2c99f829e749bb62cb4ab0aabe5371d573.318',
-                318,
-                'fcf91c2c99f829e749bb62cb4ab0aabe5371d573',
-                '',
-                '',
+                'rule'    => 'hash.id',
+                'pattern' => "|^(?'hash'[a-fA-F0-9]{40})\.(?'id'[0-9]+)$|",
+                'slug'    => 'fcf91c2c99f829e749bb62cb4ab0aabe5371d573.318',
+                'id'      => 318,
+                'hash'    => 'fcf91c2c99f829e749bb62cb4ab0aabe5371d573',
+                'title'   => '',
+                'date'    => '',
             ],
         ];
     }
@@ -98,7 +106,6 @@ class SluggerTest extends TestCase
         $actual   = $slugger->parse($slug);
         $this->assertEquals($expected, $actual);
         $this->assertSame($pattern, $slugger->getPattern());
-        
     }
     
     /**
@@ -110,24 +117,70 @@ class SluggerTest extends TestCase
      * @param string $title
      * @param string $hash
      * @param string $date
+     * @throws SluggerException
+     */
+    public function testParseWithRule(string $rule, string $pattern, string $slug, ?int $id, ?string $hash, ?string $title, ?string $date)
+    {
+        $slugger  = new Slugger($this->transliterator);
+        $expected = new Result($id, $this->transliterator->slugify($title), $hash, $date);
+        $actual   = $slugger->parse($slug, $rule);
+        $this->assertEquals($expected, $actual);
+        $this->assertSame($pattern, $slugger->getPattern());
+    }
+    
+    /**
+     * @dataProvider getTestData
+     * @param string $rule
+     * @param string $pattern
+     * @param string $slug
+     * @param int $id
+     * @param string $title
+     * @param string $hash
+     * @param string $date
+     * @throws SluggerException
      */
     public function testGenerateFromEntity(string $rule, string $pattern, string $slug, ?int $id, ?string $hash, ?string $title, ?string $date)
     {
-        $article = $this->createMock(EntityInterface::class);
-        
-        $article->method('getId')->willReturn((int)$id);
-        
-        $article->method('getTitle')->willReturn((string)$title);
-        
-        $article->method('getHash')->willReturn((string)$hash);
-        
-        $article->method('getCreatedAt')->willReturn(new \DateTime((string)$date));
-        
+        $entity  = $this->getEntityMock($id, $hash, $title, $date);
         $slugger = new Slugger($this->transliterator, $rule);
-        
-        $actual = $slugger->generateFromEntity($article);
-        
+        $actual  = $slugger->generateFromEntity($entity);
         $this->assertSame($slug, $actual);
+    }
+    
+    /**
+     * @dataProvider getTestData
+     * @param string $rule
+     * @param string $pattern
+     * @param string $slug
+     * @param int $id
+     * @param string $title
+     * @param string $hash
+     * @param string $date
+     * @throws SluggerException
+     */
+    public function testGenerateFromEntityWithRule(string $rule, string $pattern, string $slug, ?int $id, ?string $hash, ?string $title, ?string $date)
+    {
+        $entity  = $this->getEntityMock($id, $hash, $title, $date);
+        $slugger = new Slugger($this->transliterator, $rule);
+        $actual  = $slugger->generateFromEntity($entity, $rule);
+        $this->assertSame($slug, $actual);
+    }
+    
+    /**
+     * @param int|null $id
+     * @param null|string $hash
+     * @param null|string $title
+     * @param null|string $date
+     * @return EntityInterface|\PHPUnit\Framework\MockObject\MockObject
+     */
+    public function getEntityMock(?int $id, ?string $hash, ?string $title, ?string $date)
+    {
+        $entity = $this->createMock(EntityInterface::class);
+        $entity->method('getId')->willReturn((int)$id);
+        $entity->method('getTitle')->willReturn((string)$title);
+        $entity->method('getHash')->willReturn((string)$hash);
+        $entity->method('getCreatedAt')->willReturn(new \DateTime((string)$date));
+        return $entity;
     }
     
     /**
@@ -136,20 +189,32 @@ class SluggerTest extends TestCase
     public function testParseThrowsExceptionOnBadData()
     {
         $slugger = new Slugger($this->transliterator, 'id.hash');
-        
-        $slug = '318.bad-hash-here';
-        
+        $slug    = '318.bad-hash-here';
         $this->expectException(SluggerException::class);
-        
+        $this->expectExceptionCode(SluggerException::CODE_INCORRECT_DATA);
         $slugger->parse($slug);
-        
     }
     
     /**
-     *
+     * @throws SluggerException
      */
-    protected function setUp()
+    public function testParseThrowsExceptionOnRuleNotExists()
     {
-        $this->transliterator = new IntlTransliterator();
+        $slugger = new Slugger($this->transliterator);
+        $slug    = '318.2018-10-31';
+        $this->expectException(SluggerException::class);
+        $this->expectExceptionCode(SluggerException::CODE_PATTERN_EMPTY);
+        $slugger->parse($slug);
+    }
+    
+    /**
+     * @throws SluggerException
+     */
+    public function testGenerateThrowsExceptionOnRuleNotExists()
+    {
+        $slugger = new Slugger($this->transliterator);
+        $this->expectException(SluggerException::class);
+        $this->expectExceptionCode(SluggerException::CODE_RULE_EMPTY);
+        $slugger->generate(318, '', '', '');
     }
 }

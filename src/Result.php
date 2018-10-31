@@ -14,11 +14,6 @@ namespace GlobalTS\Slugger;
  */
 class Result
 {
-    public const KEY_ID    = 'id';
-    public const KEY_TITLE = 'title';
-    public const KEY_HASH  = 'hash';
-    public const KEY_DATE  = 'date';
-    
     /**
      * @var int
      */
@@ -61,10 +56,10 @@ class Result
     public static function fromArray(array $data)
     {
         return new static(
-            $data[self::KEY_ID] ?? null,
-            $data[self::KEY_TITLE] ?? null,
-            $data[self::KEY_HASH] ?? null,
-            $data[self::KEY_DATE] ?? null
+            $data[Slugger::KEY_ID] ?? null,
+            $data[Slugger::KEY_TITLE] ?? null,
+            $data[Slugger::KEY_HASH] ?? null,
+            $data[Slugger::KEY_DATE] ?? null
         );
     }
     

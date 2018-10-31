@@ -14,11 +14,16 @@ namespace GlobalTS\Slugger;
  */
 class Slugger
 {
+    public const KEY_ID    = 'id';
+    public const KEY_TITLE = 'title';
+    public const KEY_HASH  = 'hash';
+    public const KEY_DATE  = 'date';
+    
     private const RULES = [
-        'id'    => "[0-9]+",
-        'hash'  => "[a-fA-F0-9]{40}",
-        'title' => "[a-z0-9_-]+",
-        'date'  => "\d\d\d\d\-\d\d\-\d\d",
+        self::KEY_ID    => "[0-9]+",
+        self::KEY_HASH  => "[a-fA-F0-9]{40}",
+        self::KEY_TITLE => "[a-z0-9_-]+",
+        self::KEY_DATE  => "\d\d\d\d\-\d\d\-\d\d",
     ];
     
     /**
@@ -45,14 +50,30 @@ class Slugger
      * Slugger constructor.
      * @param TransliteratorInterface $transliterator
      * @param string $rule
-     * @param string $pattern
      */
-    public function __construct(TransliteratorInterface $transliterator, string $rule, string $pattern = null)
+    public function __construct(TransliteratorInterface $transliterator, string $rule = null)
     {
         $this->transliterator = $transliterator;
-        $this->rule           = trim($rule, " /");
         $this->keys           = array_keys(self::RULES);
-        $this->pattern        = $pattern ?? $this->buildPattern($this->rule);
+    
+        $this->setRuleIfExists($rule);
+    }
+    
+    /**
+     * @param string $rule
+     */
+    public function setRule(string $rule)
+    {
+        $this->rule    = trim($rule, " /");
+        $this->pattern = $this->buildPattern($this->rule);
+    }
+    
+    /**
+     * @return string
+     */
+    public function getRule()
+    {
+        return $this->rule;
     }
     
     /**
@@ -86,10 +107,14 @@ class Slugger
     
     /**
      * @param EntityInterface $article
+     * @param null|string $rule
      * @return string
+     * @throws Exception
      */
-    public function generateFromEntity(EntityInterface $article)
+    public function generateFromEntity(EntityInterface $article, ?string $rule = null)
     {
+        $this->setRuleIfExists($rule);
+        
         return $this->generate(
             $article->getId(),
             $article->getHash(),
@@ -103,10 +128,17 @@ class Slugger
      * @param string $hash
      * @param string $title
      * @param string $date
-     * @return mixed
+     * @param null|string $rule
+     * @return string
+     * @throws Exception
      */
-    public function generate(int $id, string $hash, string $title, string $date)
+    public function generate(int $id, string $hash, string $title, string $date, ?string $rule = null)
     {
+        $this->setRuleIfExists($rule);
+    
+        if (empty($this->rule)) {
+            throw new Exception('Rule is empty - you must set rule parameter before processing', Exception::CODE_RULE_EMPTY);
+        }
         $slug = str_replace($this->keys, [
             $id,
             $hash,
@@ -119,11 +151,18 @@ class Slugger
     
     /**
      * @param string $slug
+     * @param null|string $rule
      * @return Result
      * @throws Exception
      */
-    public function parse(string $slug)
+    public function parse(string $slug, ?string $rule = null)
     {
+        $this->setRuleIfExists($rule);
+    
+        if (empty($this->pattern)) {
+            throw new Exception('pattern is empty - you must set rule parameter before processing', Exception::CODE_PATTERN_EMPTY);
+        }
+        
         $res = preg_match($this->pattern, $slug, $matches);
         
         if ($res) {
@@ -135,9 +174,19 @@ class Slugger
             return Result::fromArray($data);
             
         } else {
-            throw new Exception('incorrect data');
+            throw new Exception('incorrect data', Exception::CODE_INCORRECT_DATA);
         }
         
+    }
+    
+    /**
+     * @param null|string $rule
+     */
+    private function setRuleIfExists(?string $rule)
+    {
+        if ($rule) {
+            $this->setRule($rule);
+        }
     }
     
 }
