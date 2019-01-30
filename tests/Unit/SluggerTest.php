@@ -85,6 +85,24 @@ class SluggerTest extends TestCase
                 'title'   => '',
                 'date'    => '',
             ],
+            'test_6' => [
+                'rule'    => 'id-title.html',
+                'pattern' => "|^(?'id'[0-9]+)-(?'title'[a-z0-9_-]+)\.html$|",
+                'slug'    => "5-sozdatelej-league-of-legends-zapodozrili-v-kraze-lica-kazahstanskoj-modeli.html",
+                'id'      => 5,
+                'hash'    => '',
+                'title'   => 'Создателей League of Legends заподозрили в краже лица казахстанской модели',
+                'date'    => '',
+            ],
+            'test_7' => [
+                'rule'    => 'title-id-hash.html',
+                'pattern' => "|^(?'title'[a-z0-9_-]+)-(?'id'[0-9]+)-(?'hash'[a-fA-F0-9]{40})\.html$|",
+                'slug'    => "zahashka-sozdatelej-bolida-55-fcf91c2c99f829e749bb62cb4ab0aabe5371d573.html",
+                'id'      => 55,
+                'hash'    => 'fcf91c2c99f829e749bb62cb4ab0aabe5371d573',
+                'title'   => 'Захашхка создателей болида',
+                'date'    => '',
+            ],
         ];
     }
     
@@ -138,6 +156,7 @@ class SluggerTest extends TestCase
      * @param string $hash
      * @param string $date
      * @throws SluggerException
+     * @throws \Exception
      */
     public function testGenerateFromEntity(string $rule, string $pattern, string $slug, ?int $id, ?string $hash, ?string $title, ?string $date)
     {
@@ -157,6 +176,7 @@ class SluggerTest extends TestCase
      * @param string $hash
      * @param string $date
      * @throws SluggerException
+     * @throws \Exception
      */
     public function testGenerateFromEntityWithRule(string $rule, string $pattern, string $slug, ?int $id, ?string $hash, ?string $title, ?string $date)
     {
@@ -172,6 +192,7 @@ class SluggerTest extends TestCase
      * @param null|string $title
      * @param null|string $date
      * @return EntityInterface|\PHPUnit\Framework\MockObject\MockObject
+     * @throws \Exception
      */
     public function getEntityMock(?int $id, ?string $hash, ?string $title, ?string $date)
     {

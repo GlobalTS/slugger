@@ -16,14 +16,14 @@ class Slugger
 {
     public const KEY_ID    = 'id';
     public const KEY_TITLE = 'title';
-    public const KEY_HASH  = 'hash';
     public const KEY_DATE  = 'date';
+    public const KEY_HASH  = 'hash';
     
     private const RULES = [
         self::KEY_ID    => "[0-9]+",
         self::KEY_HASH  => "[a-fA-F0-9]{40}",
-        self::KEY_TITLE => "[a-z0-9_-]+",
         self::KEY_DATE  => "\d\d\d\d\-\d\d\-\d\d",
+        self::KEY_TITLE => "[a-z0-9_-]+",
     ];
     
     /**
@@ -135,8 +135,8 @@ class Slugger
         return $this->generate(
             $entity->getId(),
             $entity->getHash(),
-            $entity->getTitle(),
             $entity->getCreatedAt()->format('Y-m-d'),
+            $entity->getTitle(),
             $rule
         );
     }
@@ -150,7 +150,7 @@ class Slugger
      * @return string
      * @throws Exception
      */
-    public function generate(int $id, string $hash, string $title, string $date, ?string $rule = null)
+    public function generate(int $id, string $hash, string $date, string $title, ?string $rule = null)
     {
         $this->setRuleIfExists($rule);
     
@@ -160,8 +160,8 @@ class Slugger
         $slug = str_replace($this->rules_keys, [
             $id,
             $hash,
-            $this->transliterator->slugify($title),
             $date,
+            $this->transliterator->slugify($title),
         ], $this->rule);
         
         return $slug;
@@ -169,7 +169,7 @@ class Slugger
     
     /**
      * @param string $slug
-     * @param null|string $rule
+     * @param string|null $rule
      * @return Result
      * @throws Exception
      */
